@@ -8,6 +8,8 @@ import java.util.Map;
 
 public interface CrudService {
     Word addWord(WordDto wordDto, Map<String,Object> claims);
-    void deleteWord(WordDto wordDto, Map<String,Object> claims);
+    void deleteWord(String word, Map<String,Object> claims);
     List<Word> getWords(int pageNumber, Map<String, Object> claims);
+    Word updateWord(WordDto wordDto, Map<String, Object> claims);
+
 }

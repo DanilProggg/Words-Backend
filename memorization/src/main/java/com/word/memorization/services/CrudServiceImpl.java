@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 
 @Slf4j
@@ -41,11 +42,11 @@ public class CrudServiceImpl implements CrudService{
             Word word = Word.builder()
                     .userId(((Long) claims.get("id")))
                     .word(wordDto.getWord())
-                    .languageCode(wordDto.getLanguage_code())
+                    .languageCode(wordDto.getLanguageCode())
+                    .transcription(wordDto.getTranscription())
                     .translation(wordDto.getTranslation())
                     .knowledgeLevel(KnowledgeLevel.NONE.getValue())
                     .notes(wordDto.getNotes())
-                    .difficultyLevel(wordDto.getDifficulty_level())
                     .createdAt(new Date())
                     .lastSeen(new Date())
                     .build();
@@ -56,14 +57,16 @@ public class CrudServiceImpl implements CrudService{
 
     /**
      *
-     * @param wordDto dto для слова
-     * @param claims jwt.payload
+     * @param word слово
+     * @param claims данные пользователя
      *
      * Удаляет слово
      */
     @Override
-    public void deleteWord(WordDto wordDto, Map<String, Object> claims) {
-
+    public void deleteWord(String word, Map<String, Object> claims) {
+        Optional<Word> w = wordRepository.findByWord(word);
+        if(w.isEmpty()) throw new WordDoesNotExistsException();
+        wordRepository.delete(w.get());
     }
 
     /**
@@ -74,10 +77,29 @@ public class CrudServiceImpl implements CrudService{
      */
     @Override
     public List<Word> getWords(int pageNumber, Map<String, Object> claims) {
-        int pageSize = 10;
 
-        Pageable pageWithLastSeenSort = PageRequest.of(pageNumber - 1, pageSize, Sort.by("lastSeen").descending());
-        Page<Word> words = wordRepository.findAllByUserIdOrderByLastSeenDesc((Long) claims.get("id"), pageWithLastSeenSort);
+        Pageable page = PageRequest.of(pageNumber - 1, 10);
+        Page<Word> words = wordRepository.findAllByUserIdOrderByCreatedAtDesc((Long) claims.get("id"), page);
         return words.getContent();
+    }
+
+    /**
+     *
+     * @param wordDto слово
+     * @param claims данные пользователя
+     *
+     * @return Обновленное слово
+     */
+    @Override
+    public Word updateWord(WordDto wordDto, Map<String, Object> claims) {
+        Word word = wordRepository.findByUserIdAndWord((Long) claims.get("id"), wordDto.getWord())
+                .orElseThrow(()-> new WordDoesNotExistsException());
+
+        word.setTranscription(wordDto.getTranscription());
+        word.setTranslation(wordDto.getTranslation());
+        word.setNotes(wordDto.getNotes());
+
+        wordRepository.save(word);
+        return word;
     }
 }

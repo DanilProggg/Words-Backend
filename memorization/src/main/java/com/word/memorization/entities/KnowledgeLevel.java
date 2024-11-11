@@ -2,6 +2,7 @@ package com.word.memorization.entities;
 
 
 import lombok.Getter;
+import lombok.Setter;
 
 public enum KnowledgeLevel {
     NONE(0),

@@ -11,6 +11,12 @@ import java.util.Date;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(
+        indexes = {
+                @Index(name = "idx_word_name", columnList = "word"),
+                @Index(name = "idx_word_last_seen", columnList = "last_seen")
+        }
+)
 public class Word {
 
     @Id
@@ -27,19 +33,19 @@ public class Word {
     @Column(name = "language_code", nullable = false)
     private String languageCode;
 
+    @Column(name = "transcription", nullable = true)
+    private String transcription; //not necessary
+
     @Column(name = "translation", nullable = false)
     private String translation;
 
     @Column(name = "knowledge_level", nullable = false)
-    private int knowledgeLevel;
+    private int knowledgeLevel; //it is issued automatically
 
-    @Column(name = "notes", nullable = false)
+    @Column(name = "notes", nullable = true)
     private String notes;
 
-    @Column(name = "difficulty_level", nullable = false)
-    private String difficultyLevel;
-
-    @Column(name = "last_seen", nullable = true)
+    @Column(name = "last_seen", nullable = false)
     private Date lastSeen;
 
     @Column(name = "create_at", nullable = false)

@@ -4,32 +4,34 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 @Data
+@Accessors(chain = true)
 @Schema(description = "WordDto")
 public class WordDto {
 
-    @Schema(description = "слово", example = "hello")
-    @Size(max = 100, message = "Слово должно содержать до 100 символов")
-    @NotBlank(message = "Слово не может быть пустыми")
+    @Schema(description = "Word", example = "hello")
+    @Size(max = 100, message = "The Word must contain up to 100 characters")
+    @NotBlank(message = "The Word cant be null")
     private String word;
 
-    @Schema(description = "Перевод", example = "привет, здравствуйте")
-    @Size(max = 200, message = "Перевод должен содержать до 200 символов")
-    @NotBlank(message = "Перевод не может быть пустыми")
+    @Schema(description = "Translation", example = "привет, здравствуйте")
+    @Size(max = 200, message = "The Translation must contain up to 200 characters")
+    @NotBlank(message = "The Translation cant be null")
     private String translation;
 
-    @Schema(description = "Код языка", example = "ru")
-    @Size(max = 10, message = "Код языка должен содержать до 10 символов")
-    @NotBlank(message = "Код языка не может быть пустыми")
-    private String language_code;
+    @Schema(description = "Transcription", example = "хэлоу")
+    @Size(max = 200, message = "The Transcription must contain up to 200 characters")
+    private String transcription;
 
-    @Schema(description = "Дополнительная информация. Примеры", example = "Приветствие. Например: \"Привет, как дела?\"")
-    @Size(max = 400, message = "Информация должена содержать до 400 символов")
+    @Schema(description = "Language Code", example = "ru")
+    @Size(max = 10, message = "The Language Code must contain up to 10 characters")
+    @NotBlank(message = "The Language Code cant be null")
+    private String languageCode;
+
+    @Schema(description = "Additional info. Examples", example = "Приветствие. Например: \"Привет, как дела?\"")
+    @Size(max = 400, message = "The Additional info must contain up to 400 characters")
     private String notes;
 
-    @Schema(description = "Уровень языка", example = "a2")
-    @Size(max = 2, message = "Код языка должен содержать до 2 символов")
-    @NotBlank(message = "Уровень языка не может быть пустыми")
-    private String difficulty_level;
 }
