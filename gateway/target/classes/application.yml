@@ -1,0 +1,21 @@
+server:
+  port: 9090
+spring:
+  application:
+    name: authentication
+  datasource:
+    platform: postgres
+    url: jdbc:postgresql://192.168.0.105:54321/users-db
+    driverClassName: org.postgresql.Driver
+    username: admin
+    password: srvadmin
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+token:
+  signing:
+    key: 53A73E5F1C4E0A2D3B5F2D784E6A1B423D6F247D1F6E5C3A596D635A75327855
