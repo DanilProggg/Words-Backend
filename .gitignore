@@ -1,3 +1,5 @@
 memorization/target/
+memorization/.mvn
 gateway/target/
+gateway/.mvn
 .idea
