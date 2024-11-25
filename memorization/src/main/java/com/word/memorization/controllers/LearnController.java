@@ -1,7 +1,5 @@
 package com.word.memorization.controllers;
 
-import com.word.memorization.components.JwtTokenProvider;
-import com.word.memorization.exceptions.WordAlreadyExistsException;
 import com.word.memorization.exceptions.WordDoesNotExistsException;
 import com.word.memorization.services.LearnService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @Tag(name = "Learning Controller")
 public class LearnController {
-    @Autowired
+    /*@Autowired
     private LearnService learnService;
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
@@ -68,5 +66,5 @@ public class LearnController {
                     String.format("An unexpected error occurred. Error: %s",
                             e.getMessage()));
         }
-    }
+    }*/
 }

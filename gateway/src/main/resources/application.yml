@@ -1,19 +1,14 @@
 server:
-  port: 9091
+  port: 8090
 spring:
   application:
-    name: memorization
+    name: authentication
   datasource:
     platform: postgres
-    url: jdbc:postgresql://192.168.0.105:54322/memorization
+    url: jdbc:postgresql://192.168.0.105:54321/users-db
     driverClassName: org.postgresql.Driver
     username: admin
     password: srvadmin
-    hikari: #Настройка пула
-      maximum-pool-size: 10
-      connection-timeout: 2000
-      idle-timeout: 600000
-      pool-name: HikariCP
   jpa:
     hibernate:
       ddl-auto: update
