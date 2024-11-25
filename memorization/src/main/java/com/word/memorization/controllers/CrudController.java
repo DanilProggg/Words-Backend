@@ -1,13 +1,11 @@
 package com.word.memorization.controllers;
 
-import com.word.memorization.components.JwtTokenProvider;
 import com.word.memorization.dtos.JsonResponse;
 import com.word.memorization.dtos.WordDto;
 import com.word.memorization.entities.Word;
 import com.word.memorization.exceptions.WordAlreadyExistsException;
 import com.word.memorization.exceptions.WordDoesNotExistsException;
 import com.word.memorization.services.CrudService;
-import com.word.memorization.services.CrudServiceImpl;
 import com.word.memorization.services.LearnService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,10 +29,9 @@ public class CrudController {
 
     @Autowired
     private LearnService learnService;
-    @Autowired JwtTokenProvider jwtTokenProvider;
 
 
-    @PostMapping("/add")
+    /*@PostMapping("/add")
     @Operation(summary = "Add word")
     public ResponseEntity<?> addWord(@RequestBody @Valid WordDto wordDto){
         try{
@@ -113,5 +110,5 @@ public class CrudController {
                     e.getMessage()));
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
-    }
+    }*/
 }
