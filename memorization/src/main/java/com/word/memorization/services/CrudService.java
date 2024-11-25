@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Map;
 
 public interface CrudService {
-    Word addWord(WordDto wordDto, Map<String,Object> claims);
-    void deleteWord(String word, Map<String,Object> claims);
-    List<Word> getWords(int pageNumber, Map<String, Object> claims);
-    Word updateWord(WordDto wordDto, Map<String, Object> claims);
+    Word addWord(WordDto wordDto, Long userId);
+    void deleteWord(String word, Long userId);
+    List<Word> getWords(int pageNumber, Long userId);
+    Word updateWord(WordDto wordDto, Long userId);
 
 }

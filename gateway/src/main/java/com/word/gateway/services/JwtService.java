@@ -1,11 +1,14 @@
 package com.word.gateway.services;
 
 import com.word.gateway.entities.User;
+import com.word.gateway.security.JwtAndRequestDetails;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.impl.lang.Function;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +22,24 @@ import java.util.Map;
 public class JwtService {
     @Value("${token.signing.key}")
     private String jwtSigningKey;
+    /**
+     * Извлечение имени пользователя из токена
+     *
+     * @return jwt token
+     */
+
+    public String getJwtFromContext() {
+        // Получаем Authentication объект из SecurityContext
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // Проверяем, что в details хранится наш кастомный объект
+        if (authentication != null && authentication.getDetails() != null) {
+            JwtAndRequestDetails jwtAndRequestDetails = (JwtAndRequestDetails) authentication.getDetails();
+            return jwtAndRequestDetails.getJwt(); // Возвращаем JWT токен
+        }
+
+        return null; // Если токен не найден
+    }
 
     /**
      * Извлечение имени пользователя из токена
@@ -29,6 +50,29 @@ public class JwtService {
     public String extractUserName(String token) {
         return extractClaim(token, Claims::getSubject);
     }
+
+    /**
+     * Извлечение имени пользователя из токена
+     *
+     * @param token токен
+     * @return  пользователя
+     */
+
+    public  Integer extractUserId(String token) {
+        // Убираем префикс "Bearer ", если он есть
+
+
+        // Декодируем токен и извлекаем payload
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()// Если хотите валидировать подпись, укажите секретный ключ
+                .parseSignedClaims(token)
+                .getPayload();
+
+        // Получаем id из payload
+        return claims.get("id", Integer.class);  // предполагается, что id хранится в поле "id" в payload
+    }
+
 
     /**
      * Генерация токена

@@ -1,56 +1,55 @@
 package com.word.gateway.controllers;
 
+import com.word.gateway.configs.RabbitMQMemorizationConfiguration;
+import com.word.gateway.dtos.WordDto;
+import com.word.gateway.services.JwtService;
 import com.word.gateway.services.UserService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.core.MessageBuilder;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.*;
 
 @RestController
-@RequestMapping("/example")
+@RequestMapping("/api/v1/crud")
 @RequiredArgsConstructor
 @Tag(name = "Аутентификация")
 public class MemorizationController {
+    private final JwtService jwtService;
     private final UserService service;
     private final RabbitTemplate rabbitTemplate;
-
-
-
     private final Map<String, CompletableFuture<String>> responseMap = new ConcurrentHashMap<>();
 
-
-    private final String memorizationResponseQueue = "memorization_response_queue";
-    private final String memorizationExchange = "memorization_exchange";
-
-    @GetMapping("/rabbitmq")
-    public ResponseEntity<String> rmq(@RequestParam String message) {
+    @GetMapping("/create")
+    public ResponseEntity<?> rmq(@RequestBody WordDto wordDto) {
         String correlationId = UUID.randomUUID().toString();
+
+       Long userId = (long) jwtService.extractUserId(jwtService.getJwtFromContext());
 
         // Создаем CompletableFuture для ожидания ответа
         CompletableFuture<String> futureResponse = new CompletableFuture<>();
         responseMap.put(correlationId, futureResponse);
 
         // Отправляем сообщение с CorrelationId
-        rabbitTemplate.convertAndSend(memorizationExchange, "memorization_request.key", message, messagePostProcessor -> {
+        rabbitTemplate.convertAndSend(RabbitMQMemorizationConfiguration.EXCHANGE, "crud.create", wordDto, messagePostProcessor -> {
             messagePostProcessor.getMessageProperties().setCorrelationId(correlationId);
-            messagePostProcessor.getMessageProperties().setReplyTo(memorizationResponseQueue);  // Указываем очередь для ответа
+            messagePostProcessor.getMessageProperties().setReplyTo(RabbitMQMemorizationConfiguration.RESPONSE_QUEUE); // Указываем очередь для ответа
+            messagePostProcessor.getMessageProperties().setHeader("user-id", userId);
             return messagePostProcessor;
         });
 
         // Ожидаем ответа асинхронно
         try {
             // Установите тайм-аут ожидания ответа
-            String response = futureResponse.get(10, TimeUnit.SECONDS);
-            return ResponseEntity.ok("Response received: " + response);
+            String response = futureResponse.get(5, TimeUnit.SECONDS);
+            return ResponseEntity.ok(response);
         } catch (TimeoutException e) {
             responseMap.remove(correlationId);  // Убираем из мапы, если истек тайм-аут
             return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body("Request timed out.");

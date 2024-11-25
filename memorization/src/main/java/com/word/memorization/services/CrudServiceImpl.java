@@ -30,17 +30,17 @@ public class CrudServiceImpl implements CrudService{
     /**
      *
      * @param wordDto dto для слова
-     * @param claims jwt.payload
+     * @param userId user id
      *
      * @return добавленое слово
      */
     @Override
-    public Word addWord(WordDto wordDto, Map<String,Object> claims){
+    public Word addWord(WordDto wordDto, Long userId){
             if(wordRepository.findByWord(wordDto.getWord()).isPresent()){
                 throw new WordAlreadyExistsException();
             }
             Word word = Word.builder()
-                    .userId(((Long) claims.get("id")))
+                    .userId(userId)
                     .word(wordDto.getWord())
                     .languageCode(wordDto.getLanguageCode())
                     .transcription(wordDto.getTranscription())
@@ -58,14 +58,15 @@ public class CrudServiceImpl implements CrudService{
     /**
      *
      * @param word слово
-     * @param claims данные пользователя
+     * @param userId данные пользователя
      *
      * Удаляет слово
      */
     @Override
-    public void deleteWord(String word, Map<String, Object> claims) {
+    public void deleteWord(String word, Long userId) {
         Optional<Word> w = wordRepository.findByWord(word);
         if(w.isEmpty()) throw new WordDoesNotExistsException();
+        //!!!!!!!!!!!!!!!!!
         wordRepository.delete(w.get());
     }
 
@@ -76,25 +77,24 @@ public class CrudServiceImpl implements CrudService{
      * @return Список слов
      */
     @Override
-    public List<Word> getWords(int pageNumber, Map<String, Object> claims) {
+    public List<Word> getWords(int pageNumber, Long userId) {
 
         Pageable page = PageRequest.of(pageNumber - 1, 10);
-        Page<Word> words = wordRepository.findAllByUserIdOrderByCreatedAtDesc((Long) claims.get("id"), page);
+        Page<Word> words = wordRepository.findAllByUserIdOrderByCreatedAtDesc(userId, page);
         return words.getContent();
     }
 
     /**
      *
      * @param wordDto слово
-     * @param claims данные пользователя
+     * @param userId данные пользователя
      *
      * @return Обновленное слово
      */
     @Override
-    public Word updateWord(WordDto wordDto, Map<String, Object> claims) {
-        Word word = wordRepository.findByUserIdAndWord((Long) claims.get("id"), wordDto.getWord())
+    public Word updateWord(WordDto wordDto, Long userId) {
+        Word word = wordRepository.findByUserIdAndWord(userId, wordDto.getWord())
                 .orElseThrow(()-> new WordDoesNotExistsException());
-
         word.setTranscription(wordDto.getTranscription());
         word.setTranslation(wordDto.getTranslation());
         word.setNotes(wordDto.getNotes());

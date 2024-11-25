@@ -1,6 +1,5 @@
-package com.word.gateway.configs;
+package com.word.gateway.security;
 
-import com.word.gateway.components.JwtAuthenticationFilter;
 import com.word.gateway.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

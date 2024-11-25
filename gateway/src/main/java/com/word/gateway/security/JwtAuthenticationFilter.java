@@ -1,4 +1,4 @@
-package com.word.gateway.components;
+package com.word.gateway.security;
 
 import com.word.gateway.services.JwtService;
 import com.word.gateway.services.UserService;
@@ -13,6 +13,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -60,7 +61,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         userDetails.getAuthorities()
                 );
 
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                WebAuthenticationDetails requestDetails = new WebAuthenticationDetailsSource().buildDetails(request);
+
+                // Создаем объект, который хранит как токен, так и данные запроса
+                JwtAndRequestDetails jwtAndRequestDetails = new JwtAndRequestDetails(jwt, requestDetails);
+
+                authToken.setDetails(jwtAndRequestDetails);
                 context.setAuthentication(authToken);
                 SecurityContextHolder.setContext(context);
             }
