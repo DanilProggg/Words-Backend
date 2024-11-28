@@ -1,8 +1,8 @@
 package com.word.gateway.services;
 
-import com.word.gateway.dtos.JwtAuthenticationResponse;
-import com.word.gateway.dtos.SignInRequest;
-import com.word.gateway.dtos.SignUpRequest;
+import com.word.gateway.security.JwtAuthenticationResponse;
+import com.word.gateway.security.SignInRequest;
+import com.word.gateway.security.SignUpRequest;
 import com.word.gateway.entities.Role;
 import com.word.gateway.entities.User;
 import lombok.RequiredArgsConstructor;

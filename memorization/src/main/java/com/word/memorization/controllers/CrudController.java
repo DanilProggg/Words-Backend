@@ -1,26 +1,21 @@
 package com.word.memorization.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.word.memorization.configs.RabbitMQConfiguration;
-import com.word.memorization.dtos.JsonResponse;
+import com.word.memorization.dtos.RabbitMQResponse;
 import com.word.memorization.dtos.WordDto;
 import com.word.memorization.entities.Word;
 import com.word.memorization.exceptions.WordAlreadyExistsException;
-import com.word.memorization.exceptions.WordDoesNotExistsException;
 import com.word.memorization.services.CrudService;
 import com.word.memorization.services.LearnService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -30,75 +25,87 @@ public class CrudController {
 
     @Autowired
     private CrudService crudService;
-
     @Autowired
     private LearnService learnService;
-
     @Autowired
     private RabbitTemplate rabbitTemplate;
+
+    private void rabbitReply(String replyToQueue, String correlationId, String response, int status) {
+        rabbitTemplate.convertAndSend(replyToQueue, new RabbitMQResponse(response, status), messagePostProcessor -> {
+            messagePostProcessor.getMessageProperties().setCorrelationId(correlationId);
+            return messagePostProcessor;
+        });
+    }
 
 
 
     @RabbitListener(queues = RabbitMQConfiguration.CRUD_CREATE)
-    public void listen(WordDto wordDto,
+    public void listenCrudCreate(WordDto wordDto,
                        @Header(AmqpHeaders.CORRELATION_ID) String correlationId,
                        @Header(AmqpHeaders.REPLY_TO) String replyToQueue,
                        @Header("user-id") Long userId){
-        System.out.println("Received message" + wordDto.toString());
-        System.out.println("CorrelationId: " + correlationId);
-        System.out.println("UserId: " + userId);
 
-
-
-
-        try{
-
+        try {
             crudService.addWord(wordDto, userId);
             log.info("UserId: "+ userId + " Added word: " + wordDto.toString());
 
             String response = "The Word was added successful";
 
-            rabbitTemplate.convertAndSend(replyToQueue, response, messagePostProcessor -> {
-                messagePostProcessor.getMessageProperties().setCorrelationId(correlationId);
-                messagePostProcessor.getMessageProperties().setHeader("status", HttpStatus.OK);
-                return messagePostProcessor;
-            });
-
+            rabbitReply(replyToQueue, correlationId, response, HttpStatus.OK.value());
         } catch (WordAlreadyExistsException e) {
 
             log.error(String.format("Word \"%s\" already exists. Error: %s",
                     wordDto.getWord(), e.getMessage()));
 
-
             String response = String.format("Word \"%s\" already exists. Error: %s",
                             wordDto.getWord(), e.getMessage()
             );
 
-            rabbitTemplate.convertAndSend(replyToQueue, response, messagePostProcessor -> {
-                messagePostProcessor.getMessageProperties().setCorrelationId(correlationId);
-                messagePostProcessor.getMessageProperties().setHeader("status", HttpStatus.CONFLICT);
-                return messagePostProcessor;
-            });
-
+            rabbitReply(replyToQueue, correlationId, response, HttpStatus.CONFLICT.value());
         } catch (Exception e){
 
             log.error(String.format("An unexpected error occurred. Error: %s",
                     e.getMessage()));
 
-
             String response = String.format("An unexpected error occurred. Error: %s",
                             e.getMessage()
             );
 
-            rabbitTemplate.convertAndSend(replyToQueue, response, messagePostProcessor -> {
-                messagePostProcessor.getMessageProperties().setCorrelationId(correlationId);
-                messagePostProcessor.getMessageProperties().setHeader("status", HttpStatus.CONFLICT);
-                return messagePostProcessor;
-            });
-
+            rabbitReply(replyToQueue, correlationId, response, HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
+    }
 
 
+
+
+    @RabbitListener(queues = RabbitMQConfiguration.CRUD_GET)
+    public void listenCrudGet(int page,
+                              @Header(AmqpHeaders.CORRELATION_ID) String correlationId,
+                              @Header(AmqpHeaders.REPLY_TO) String replyToQueue,
+                              @Header("user-id") Long userId){
+        System.out.println("Got message");
+
+        try {
+            System.out.println("Trying to get words");
+            List<Word> words = crudService.getWords(page, userId);
+            log.info("UserId: "+ userId + " Get list of words: " + words);
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            String json = objectMapper.writeValueAsString(words);
+
+            rabbitReply(replyToQueue, correlationId, json, HttpStatus.OK.value());
+            System.out.println("Replied");
+        } catch (Exception e){
+
+            log.error(String.format("An unexpected error occurred. Error: %s",
+                    e.getMessage()));
+
+            String response = String.format("An unexpected error occurred. Error: %s",
+                    e.getMessage()
+            );
+
+            rabbitReply(replyToQueue, correlationId, response, HttpStatus.INTERNAL_SERVER_ERROR.value());
+        }
     }
 
 

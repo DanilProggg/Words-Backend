@@ -8,16 +8,13 @@ import com.word.memorization.exceptions.WordDoesNotExistsException;
 import com.word.memorization.repositories.WordRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 
@@ -36,7 +33,7 @@ public class CrudServiceImpl implements CrudService{
      */
     @Override
     public Word addWord(WordDto wordDto, Long userId){
-            if(wordRepository.findByWord(wordDto.getWord()).isPresent()){
+            if(wordRepository.findByUserIdAndWord(userId, wordDto.getWord()).isPresent()){
                 throw new WordAlreadyExistsException();
             }
             Word word = Word.builder()
@@ -64,9 +61,8 @@ public class CrudServiceImpl implements CrudService{
      */
     @Override
     public void deleteWord(String word, Long userId) {
-        Optional<Word> w = wordRepository.findByWord(word);
+        Optional<Word> w = wordRepository.findByUserIdAndWord(userId,word);
         if(w.isEmpty()) throw new WordDoesNotExistsException();
-        //!!!!!!!!!!!!!!!!!
         wordRepository.delete(w.get());
     }
 
@@ -78,7 +74,6 @@ public class CrudServiceImpl implements CrudService{
      */
     @Override
     public List<Word> getWords(int pageNumber, Long userId) {
-
         Pageable page = PageRequest.of(pageNumber - 1, 10);
         Page<Word> words = wordRepository.findAllByUserIdOrderByCreatedAtDesc(userId, page);
         return words.getContent();

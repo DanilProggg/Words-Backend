@@ -66,8 +66,8 @@ public class RabbitMQMemorizationConfiguration {
     }
 
     @Bean
-    Binding bindingCrudGet(Queue memorizationCrudUpdateQueue, Exchange memorizationExchange) {
-        return BindingBuilder.bind(memorizationCrudUpdateQueue)
+    Binding bindingCrudGet(Queue memorizationCrudGetQueue, Exchange memorizationExchange) {
+        return BindingBuilder.bind(memorizationCrudGetQueue)
                 .to(memorizationExchange())
                 .with("crud.get")
                 .noargs();

@@ -1,8 +1,8 @@
 package com.word.gateway.controllers;
 
-import com.word.gateway.dtos.JwtAuthenticationResponse;
-import com.word.gateway.dtos.SignInRequest;
-import com.word.gateway.dtos.SignUpRequest;
+import com.word.gateway.security.JwtAuthenticationResponse;
+import com.word.gateway.security.SignInRequest;
+import com.word.gateway.security.SignUpRequest;
 import com.word.gateway.services.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

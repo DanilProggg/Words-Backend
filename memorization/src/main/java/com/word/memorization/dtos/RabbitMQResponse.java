@@ -5,6 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class JsonResponse {
+public class RabbitMQResponse {
     private String message;
+    private int status;
 }
