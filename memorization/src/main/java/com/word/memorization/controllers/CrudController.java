@@ -6,6 +6,7 @@ import com.word.memorization.dtos.RabbitMQResponse;
 import com.word.memorization.dtos.WordDto;
 import com.word.memorization.entities.Word;
 import com.word.memorization.exceptions.WordAlreadyExistsException;
+import com.word.memorization.exceptions.WordDoesNotExistsException;
 import com.word.memorization.services.CrudService;
 import com.word.memorization.services.LearnService;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
@@ -83,10 +85,8 @@ public class CrudController {
                               @Header(AmqpHeaders.CORRELATION_ID) String correlationId,
                               @Header(AmqpHeaders.REPLY_TO) String replyToQueue,
                               @Header("user-id") Long userId){
-        System.out.println("Got message");
 
         try {
-            System.out.println("Trying to get words");
             List<Word> words = crudService.getWords(page, userId);
             log.info("UserId: "+ userId + " Get list of words: " + words);
 
@@ -94,7 +94,6 @@ public class CrudController {
             String json = objectMapper.writeValueAsString(words);
 
             rabbitReply(replyToQueue, correlationId, json, HttpStatus.OK.value());
-            System.out.println("Replied");
         } catch (Exception e){
 
             log.error(String.format("An unexpected error occurred. Error: %s",
@@ -109,84 +108,67 @@ public class CrudController {
     }
 
 
-    /*@PostMapping("/add")
-    @Operation(summary = "Add word")
-    public ResponseEntity<?> addWord(@RequestBody @Valid WordDto wordDto){
-        try{
+    @RabbitListener(queues = RabbitMQConfiguration.CRUD_UPDATE)
+    public void listenCrudUpdate(WordDto wordDto,
+                              @Header(AmqpHeaders.CORRELATION_ID) String correlationId,
+                              @Header(AmqpHeaders.REPLY_TO) String replyToQueue,
+                              @Header("user-id") Long userId){
 
-            crudService.addWord(wordDto, jwtTokenProvider.getClaims());
-            return ResponseEntity.ok(new JsonResponse("The Word was added successful"));
+        try {
+            crudService.updateWord(wordDto, userId);
+            log.info("UserId: "+ userId + " Update word: " + wordDto);
 
-        } catch (WordAlreadyExistsException e) {
+            String response = "Word updated";
 
-            log.error(String.format("Word \"%s\" already exists. Error: %s",
-                            wordDto.getWord(), e.getMessage()));
+            rabbitReply(replyToQueue, correlationId, response, HttpStatus.OK.value());
 
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                    String.format("Word \"%s\" already exists. Error: %s",
-                            wordDto.getWord(), e.getMessage())
-            );
-
+        } catch (WordDoesNotExistsException e) {
+            log.error(e.getMessage());
+            String response = e.getMessage()
+                    ;
+            rabbitReply(replyToQueue, correlationId, response, HttpStatus.INTERNAL_SERVER_ERROR.value());
         } catch (Exception e){
 
             log.error(String.format("An unexpected error occurred. Error: %s",
                     e.getMessage()));
 
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    String.format("An unexpected error occurred. Error: %s",
-                            e.getMessage())
+            String response = String.format("An unexpected error occurred. Error: %s",
+                    e.getMessage()
             );
 
-        }
-    }
-    @GetMapping("/get/all/{page}")
-    @Operation(description = "Get page with user`s words")
-    public ResponseEntity<?> getUsersWords(@PathVariable int page){
-        try {
-            List<Word> list = crudService.getWords(page, jwtTokenProvider.getClaims());
-            return ResponseEntity.ok(list);
-        } catch (Exception e) {
-            log.error(String.format("An unexpected error occurred. Error: %s",
-                            e.getMessage()));
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            rabbitReply(replyToQueue, correlationId, response, HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
     }
 
-    @PostMapping("/update")
-    @Operation(description = "Update word")
-    public ResponseEntity<?> updateWord(@RequestBody @Valid WordDto wordDto){
+    @RabbitListener(queues = RabbitMQConfiguration.CRUD_DELETE)
+    public void listenCrudDelete(WordDto wordDto,
+                                 @Header(AmqpHeaders.CORRELATION_ID) String correlationId,
+                                 @Header(AmqpHeaders.REPLY_TO) String replyToQueue,
+                                 @Header("user-id") Long userId){
+
         try {
-            crudService.updateWord(wordDto, jwtTokenProvider.getClaims());
-            return ResponseEntity.ok(new JsonResponse("The word was updated successfully"));
+            System.out.println("Trying to get words");
+            crudService.deleteWord(wordDto, userId);
+            log.info("UserId: "+ userId + " Delete word: " + wordDto);
+
+            String response = "Word deleted";
+
+            rabbitReply(replyToQueue, correlationId, response, HttpStatus.OK.value());
 
         } catch (WordDoesNotExistsException e) {
-            log.error(String.format("Word \"%s\"does not exist. Error: %s",
-                    wordDto.getWord(), e.getMessage()));
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+            log.error(e.getMessage());
+            String response = e.getMessage();
+            rabbitReply(replyToQueue, correlationId, response, HttpStatus.CONFLICT.value());
+        } catch (Exception e){
 
-        } catch (Exception e) {
-            log.error(String.format("An unexpected error occurred. Error: %s",
-                            e.getMessage()));
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
-    }
-
-    @DeleteMapping("/delete/{word}")
-    @Operation(description = "Delete word")
-    public ResponseEntity<?> deleteWord(@PathVariable String word){
-        try {
-            crudService.deleteWord(word, jwtTokenProvider.getClaims());
-            return ResponseEntity.ok(new JsonResponse("The word was deleted successfully"));
-
-        } catch (WordDoesNotExistsException e) {
-            log.error(String.format("Word \"%s\"does not exist. Error: %s",
-                    word, e.getMessage()));
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
-
-        } catch (Exception e) {
             log.error(String.format("An unexpected error occurred. Error: %s",
                     e.getMessage()));
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+
+            String response = String.format("An unexpected error occurred. Error: %s",
+                    e.getMessage()
+            );
+
+            rabbitReply(replyToQueue, correlationId, response, HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
-    }*/
+    }
 }

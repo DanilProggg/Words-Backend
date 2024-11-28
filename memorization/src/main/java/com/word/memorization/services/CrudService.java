@@ -8,7 +8,7 @@ import java.util.Map;
 
 public interface CrudService {
     Word addWord(WordDto wordDto, Long userId);
-    void deleteWord(String word, Long userId);
+    void deleteWord(WordDto wordDto, Long userId);
     List<Word> getWords(int pageNumber, Long userId);
     Word updateWord(WordDto wordDto, Long userId);
 

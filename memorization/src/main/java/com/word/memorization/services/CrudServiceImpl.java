@@ -54,14 +54,14 @@ public class CrudServiceImpl implements CrudService{
 
     /**
      *
-     * @param word слово
+     * @param wordDto слово
      * @param userId данные пользователя
      *
      * Удаляет слово
      */
     @Override
-    public void deleteWord(String word, Long userId) {
-        Optional<Word> w = wordRepository.findByUserIdAndWord(userId,word);
+    public void deleteWord(WordDto wordDto, Long userId) {
+        Optional<Word> w = wordRepository.findByUserIdAndWord(userId,wordDto.getWord());
         if(w.isEmpty()) throw new WordDoesNotExistsException();
         wordRepository.delete(w.get());
     }

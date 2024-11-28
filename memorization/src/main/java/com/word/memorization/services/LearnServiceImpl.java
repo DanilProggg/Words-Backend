@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class LearnServiceImpl implements LearnService{
@@ -25,14 +24,14 @@ public class LearnServiceImpl implements LearnService{
 
     /**
      *
-     * @param claims jwt payload
+     * @param userId user id
      *
      * @return word that user should repeat
      *
      */
     @Override
-    public Word getWord(Map<String, Object> claims) {
-        Word word = wordRepository.findNextWordForUser((Long) claims.get("id"))
+    public Word getWord(Long userId) {
+        Word word = wordRepository.findNextWordForUser(userId)
                 .orElseThrow(()-> new WordDoesNotExistsException());
 
         word.setLastSeen(new Date());
@@ -45,15 +44,15 @@ public class LearnServiceImpl implements LearnService{
      *
      * @param pageNumber page number for pagination
      * @param level level value for word`s knowledge
-     * @param claims jwt payload
+     * @param userId jwt payload
      *
      * @return list of words that sorted by knowledge level
      *
      */
     @Override
-    public List<Word> getWordsByKnowledgeLevel(int pageNumber, int level, Map<String, Object> claims) {
+    public List<Word> getWordsByKnowledgeLevel(int pageNumber, int level,  Long userId) {
         Pageable page = PageRequest.of(pageNumber - 1, 10);
-        Page<Word> words = wordRepository.findAllByUserIdAndKnowledgeLevel((Long) claims.get("id"), level, page);
+        Page<Word> words = wordRepository.findAllByUserIdAndKnowledgeLevel(userId, level, page);
         return words.getContent();
     }
 
@@ -61,14 +60,14 @@ public class LearnServiceImpl implements LearnService{
      *
      * @param level level value for word`s knowledge
      * @param word word that we need update
-     * @param claims jwt payload
+     * @param userId user id
      *
      * @return word to update knowledge level
      *
      */
     @Override
-    public Word updateWordKnowledgeLevel(int level, Word word, Map<String, Object> claims) {
-        Word w = wordRepository.findByUserIdAndWord((Long) claims.get("id"), word.getWord())
+    public Word updateWordKnowledgeLevel(int level, Word word,  Long userId) {
+        Word w = wordRepository.findByUserIdAndWord(userId, word.getWord())
                 .orElseThrow(()-> new WordDoesNotExistsException());
 
         if(level <= KnowledgeLevel.EXCELLENT.getValue() && level >= KnowledgeLevel.NONE.getValue()) {
