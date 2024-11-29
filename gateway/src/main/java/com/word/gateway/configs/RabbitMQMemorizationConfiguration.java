@@ -87,4 +87,28 @@ public class RabbitMQMemorizationConfiguration {
                 .noargs();
     }
 
+    @Bean
+    Binding bindingLearnGet(Queue memorizationLearnGetWordQueue, Exchange memorizationExchange) {
+        return BindingBuilder.bind(memorizationLearnGetWordQueue)
+                .to(memorizationExchange())
+                .with("learn.get.word")
+                .noargs();
+    }
+
+    @Bean
+    Binding bindingLearnGetWordsByKnowledge(Queue memorizationLearnGetWordByKnowledgeQueue, Exchange memorizationExchange) {
+        return BindingBuilder.bind(memorizationLearnGetWordByKnowledgeQueue)
+                .to(memorizationExchange())
+                .with("learn.get.words_by_knowledge")
+                .noargs();
+    }
+
+    @Bean
+    Binding bindingLearnUpdateWordKnowledge(Queue memorizationLearnUpdateWordKnowledgeQueue, Exchange memorizationExchange) {
+        return BindingBuilder.bind(memorizationLearnUpdateWordKnowledgeQueue)
+                .to(memorizationExchange())
+                .with("learn.update.word_knowledge")
+                .noargs();
+    }
+
 }

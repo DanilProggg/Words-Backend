@@ -28,8 +28,6 @@ public class CrudController {
     @Autowired
     private CrudService crudService;
     @Autowired
-    private LearnService learnService;
-    @Autowired
     private RabbitTemplate rabbitTemplate;
 
     private void rabbitReply(String replyToQueue, String correlationId, String response, int status) {
@@ -147,7 +145,6 @@ public class CrudController {
                                  @Header("user-id") Long userId){
 
         try {
-            System.out.println("Trying to get words");
             crudService.deleteWord(wordDto, userId);
             log.info("UserId: "+ userId + " Delete word: " + wordDto);
 

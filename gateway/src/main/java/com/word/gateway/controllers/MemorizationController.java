@@ -100,7 +100,7 @@ public class MemorizationController {
 
     @PostMapping("/crud/update")
     @Operation(description = "Update word")
-    public ResponseEntity<?> updateWord(@RequestBody @Valid WordDto wordDto){
+    public ResponseEntity<?> updateWord(@RequestBody @Valid WordDto wordDto) {
         String correlationId = UUID.randomUUID().toString();
 
         Long userId = (long) jwtService.extractUserId(jwtService.getJwtFromContext());
@@ -145,6 +145,40 @@ public class MemorizationController {
 
         // Отправляем сообщение с CorrelationId
         rabbitTemplate.convertAndSend(RabbitMQMemorizationConfiguration.EXCHANGE, "crud.delete", wordDto, messagePostProcessor -> {
+            messagePostProcessor.getMessageProperties().setCorrelationId(correlationId);
+            messagePostProcessor.getMessageProperties().setReplyTo(RabbitMQMemorizationConfiguration.RESPONSE_QUEUE); // Указываем очередь для ответа
+            messagePostProcessor.getMessageProperties().setHeader("user-id", userId);
+            return messagePostProcessor;
+        });
+
+        // Ожидаем ответа асинхронно
+        try {
+            // Установите тайм-аут ожидания ответа
+            RabbitMQResponse response = futureResponse.get(5, TimeUnit.SECONDS);
+            return new ResponseEntity<>(response.getMessage(), HttpStatus.valueOf(response.getStatus()));
+        } catch (TimeoutException e) {
+            responseMap.remove(correlationId);  // Delete if time out
+            return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body("Request timed out.");
+        } catch (InterruptedException | ExecutionException e) {
+            responseMap.remove(correlationId);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error processing request: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/learn/get")
+    @Operation(description = "Get word to learn")
+    public ResponseEntity<?> get() {
+        String correlationId = UUID.randomUUID().toString();
+
+        Long userId = (long) jwtService.extractUserId(jwtService.getJwtFromContext());
+
+        // Создаем CompletableFuture для ожидания ответа
+        CompletableFuture<RabbitMQResponse> futureResponse = new CompletableFuture<>();
+        responseMap.put(correlationId, futureResponse);
+
+        // Отправляем сообщение с CorrelationId
+        rabbitTemplate.convertAndSend(RabbitMQMemorizationConfiguration.EXCHANGE, "learn.get.word", userId, messagePostProcessor -> {
             messagePostProcessor.getMessageProperties().setCorrelationId(correlationId);
             messagePostProcessor.getMessageProperties().setReplyTo(RabbitMQMemorizationConfiguration.RESPONSE_QUEUE); // Указываем очередь для ответа
             messagePostProcessor.getMessageProperties().setHeader("user-id", userId);
