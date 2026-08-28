@@ -2,7 +2,7 @@
 
 Spring Boot microservices powering **Words**, a vocabulary-learning app with a dictionary and a spaced-repetition-style learning flow.
 
-This repo is the **backend half** of the Words project (the SPA frontend lives in the companion `Words-Frontend` repo). It contains two independently deployable microservices that live side by side in this monorepo.
+This repo is the **backend half** of the Words project (the SPA frontend lives in the companion [Words-Frontend](https://github.com/DanilProggg/Words-Frontend) repo). It contains two independently deployable microservices that live side by side in this monorepo.
 
 ## What the app does
 
